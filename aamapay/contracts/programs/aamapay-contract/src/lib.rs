@@ -85,7 +85,7 @@ fn create_transaction(
     );
     let fee = (amount * 50) / 10000;
 
-    msg!("Creating transaction: {} USDC", amount);
+    msg!("Creating transaction: {} SOLONA", amount);
 
     let transfer_ix = transfer(
         &TOKEN_PROGRAM_ID,

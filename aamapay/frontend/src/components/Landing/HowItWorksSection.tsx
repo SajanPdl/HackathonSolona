@@ -1,29 +1,29 @@
-import { Wallet, Send, Key, Banknote } from 'lucide-react';
+import { Wallet, Send, Key, Banknote } from "lucide-react";
 
 const steps = [
   {
     icon: Wallet,
-    number: '01',
-    title: 'Connect Wallet',
-    description: 'Link your Phantom wallet to get started',
+    number: "01",
+    title: "Connect Wallet",
+    description: "Link your Phantom wallet to get started",
   },
   {
     icon: Send,
-    number: '02',
-    title: 'Send USDC',
-    description: 'Enter amount and recipient details',
+    number: "02",
+    title: "Send SOLONA",
+    description: "Enter amount and recipient details",
   },
   {
     icon: Key,
-    number: '03',
-    title: 'Share Code',
-    description: 'Give claim code to recipient',
+    number: "03",
+    title: "Share Code",
+    description: "Give claim code to recipient",
   },
   {
     icon: Banknote,
-    number: '04',
-    title: 'Get Cash',
-    description: 'Family receives cash from agent',
+    number: "04",
+    title: "Get Cash",
+    description: "Family receives cash from agent",
   },
 ];
 
@@ -48,9 +48,13 @@ export function HowItWorksSection() {
                   <div className="w-12 h-12 rounded-xl bg-[#B91C1C]/10 flex items-center justify-center">
                     <step.icon className="w-6 h-6 text-[#B91C1C]" />
                   </div>
-                  <span className="text-4xl font-bold text-gray-100">{step.number}</span>
+                  <span className="text-4xl font-bold text-gray-100">
+                    {step.number}
+                  </span>
                 </div>
-                <h3 className="text-lg font-semibold text-[#111827] mb-2">{step.title}</h3>
+                <h3 className="text-lg font-semibold text-[#111827] mb-2">
+                  {step.title}
+                </h3>
                 <p className="text-sm text-[#6B7280]">{step.description}</p>
               </div>
               {index < steps.length - 1 && (

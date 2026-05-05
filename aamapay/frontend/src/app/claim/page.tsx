@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useWallet } from '@/context/WalletContext';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { api } from '@/utils/api';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import toast, { Toaster } from 'react-hot-toast';
-import gsap from 'gsap';
-import { 
-  Wallet, 
-  CheckCircle, 
-  MapPin, 
-  Loader2, 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useWallet } from "@/context/WalletContext";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { api } from "@/utils/api";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import toast, { Toaster } from "react-hot-toast";
+import gsap from "gsap";
+import {
+  Wallet,
+  CheckCircle,
+  MapPin,
+  Loader2,
   ChevronRight,
   Shield,
   Clock,
@@ -21,45 +21,51 @@ import {
   Receipt,
   AlertCircle,
   Copy,
-  ArrowRight
-} from 'lucide-react';
+  ArrowRight,
+} from "lucide-react";
 
 export default function ClaimPage() {
   const { connected, publicKey } = useWallet();
-  const [claimCode, setClaimCode] = useState('');
-  const [step, setStep] = useState<'connect' | 'enter' | 'verify' | 'success'>('connect');
+  const [claimCode, setClaimCode] = useState("");
+  const [step, setStep] = useState<"connect" | "enter" | "verify" | "success">(
+    "connect",
+  );
   const [verifiedTx, setVerifiedTx] = useState<any>(null);
 
   const verifyMutation = useMutation({
-    mutationFn: (data: { claimCode: string }) => api.claims.verify(data) as Promise<any>,
+    mutationFn: (data: { claimCode: string }) =>
+      api.claims.verify(data) as Promise<any>,
     onSuccess: (data: any) => {
       if (data.valid) {
         setVerifiedTx(data.transaction);
-        setStep('verify');
+        setStep("verify");
       }
     },
     onError: () => {
-      toast.error('Invalid or expired claim code');
+      toast.error("Invalid or expired claim code");
     },
   });
 
   const redeemMutation = useMutation({
-    mutationFn: (data: { claimCode: string; agentId: string }) => 
-      api.claims.redeem(data, localStorage.getItem('aamapay_token')!) as Promise<any>,
+    mutationFn: (data: { claimCode: string; agentId: string }) =>
+      api.claims.redeem(
+        data,
+        localStorage.getItem("aamapay_token")!,
+      ) as Promise<any>,
     onSuccess: () => {
-      setStep('success');
-      toast.success('Money received successfully!');
+      setStep("success");
+      toast.success("Money received successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to redeem');
+      toast.error(error.message || "Failed to redeem");
     },
   });
 
   useEffect(() => {
     if (connected && publicKey) {
-      const token = localStorage.getItem('aamapay_token');
+      const token = localStorage.getItem("aamapay_token");
       if (token) {
-        setStep('enter');
+        setStep("enter");
       }
     }
   }, [connected, publicKey]);
@@ -67,19 +73,23 @@ export default function ClaimPage() {
   const handleConnect = async () => {
     if (connected && publicKey) {
       try {
-        const token = localStorage.getItem('aamapay_token');
+        const token = localStorage.getItem("aamapay_token");
         if (!token) {
-          const res = await api.auth.login({ walletAddress: publicKey.toString() }) as { token: string };
-          localStorage.setItem('aamapay_token', res.token);
+          const res = (await api.auth.login({
+            walletAddress: publicKey.toString(),
+          })) as { token: string };
+          localStorage.setItem("aamapay_token", res.token);
         }
-        setStep('enter');
+        setStep("enter");
       } catch (error) {
         try {
-          const res = await api.auth.register({ walletAddress: publicKey.toString() }) as { token: string };
-          localStorage.setItem('aamapay_token', res.token);
-          setStep('enter');
+          const res = (await api.auth.register({
+            walletAddress: publicKey.toString(),
+          })) as { token: string };
+          localStorage.setItem("aamapay_token", res.token);
+          setStep("enter");
         } catch (err) {
-          toast.error('Failed to connect wallet');
+          toast.error("Failed to connect wallet");
         }
       }
     }
@@ -94,22 +104,19 @@ export default function ClaimPage() {
 
   const handleRedeem = async () => {
     try {
-      const token = localStorage.getItem('aamapay_token');
+      const token = localStorage.getItem("aamapay_token");
       if (!token) {
-        toast.error('Please connect your wallet');
+        toast.error("Please connect your wallet");
         return;
       }
-      await api.claims.redeem(
-        { claimCode, agentId: 'default-agent' },
-        token
-      );
-      setStep('success');
+      await api.claims.redeem({ claimCode, agentId: "default-agent" }, token);
+      setStep("success");
     } catch (error: any) {
-      toast.error(error.message || 'Failed to redeem');
+      toast.error(error.message || "Failed to redeem");
     }
   };
 
-  if (step === 'success') {
+  if (step === "success") {
     return (
       <div className="min-h-screen bg-[#F5F5F5] pt-20 pb-12">
         <div className="max-w-lg mx-auto px-4">
@@ -117,8 +124,10 @@ export default function ClaimPage() {
             <div className="w-20 h-20 rounded-full bg-[#16A34A]/10 flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-10 h-10 text-[#16A34A]" />
             </div>
-            
-            <h1 className="text-2xl font-bold text-[#111827] mb-2">Money Received!</h1>
+
+            <h1 className="text-2xl font-bold text-[#111827] mb-2">
+              Money Received!
+            </h1>
             <p className="text-[#6B7280] mb-8">
               Your transfer has been completed successfully
             </p>
@@ -126,7 +135,7 @@ export default function ClaimPage() {
             <div className="bg-[#16A34A]/5 rounded-2xl p-6 mb-6">
               <p className="text-sm text-[#6B7280] mb-1">You received</p>
               <p className="text-3xl font-bold text-[#16A34A]">
-                {verifiedTx?.amount} USDC
+                {verifiedTx?.amount} SOLONA
               </p>
             </div>
 
@@ -159,12 +168,14 @@ export default function ClaimPage() {
             <div className="w-16 h-16 rounded-2xl bg-[#B91C1C]/10 flex items-center justify-center mx-auto mb-6">
               <Wallet className="w-8 h-8 text-[#B91C1C]" />
             </div>
-            
-            <h1 className="text-2xl font-bold text-[#111827] mb-3">Connect Wallet to Claim</h1>
+
+            <h1 className="text-2xl font-bold text-[#111827] mb-3">
+              Connect Wallet to Claim
+            </h1>
             <p className="text-[#6B7280] mb-8 max-w-sm mx-auto">
               Connect your Phantom wallet to verify and claim your transfer
             </p>
-            
+
             <WalletMultiButton className="!bg-[#B91C1C] !hover:bg-[#991B1B] !rounded-xl !w-full !justify-center !py-4" />
           </div>
         </div>
@@ -175,10 +186,13 @@ export default function ClaimPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F5] pt-20 pb-12">
       <Toaster position="top-center" />
-      
+
       <div className="max-w-lg mx-auto px-4">
         <div className="mb-8">
-          <Link href="/" className="text-[#6B7280] hover:text-[#111827] text-sm flex items-center gap-1">
+          <Link
+            href="/"
+            className="text-[#6B7280] hover:text-[#111827] text-sm flex items-center gap-1"
+          >
             <ChevronRight className="w-4 h-4 rotate-180" />
             Back
           </Link>
@@ -192,13 +206,15 @@ export default function ClaimPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold">Claim Money</h1>
-                <p className="text-green-100 text-sm">Enter your claim code to receive</p>
+                <p className="text-green-100 text-sm">
+                  Enter your claim code to receive
+                </p>
               </div>
             </div>
           </div>
 
           <div className="p-6">
-            {step === 'connect' && (
+            {step === "connect" && (
               <div className="text-center py-8">
                 <button
                   onClick={handleConnect}
@@ -209,7 +225,7 @@ export default function ClaimPage() {
               </div>
             )}
 
-            {step === 'enter' && (
+            {step === "enter" && (
               <form onSubmit={handleVerify}>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-[#111827] mb-2">
@@ -254,15 +270,17 @@ export default function ClaimPage() {
               </form>
             )}
 
-            {step === 'verify' && verifiedTx && (
+            {step === "verify" && verifiedTx && (
               <div className="animate-fade-in">
                 <div className="bg-[#16A34A]/5 border-2 border-[#16A34A]/20 rounded-2xl p-6 mb-6">
                   <div className="flex items-center gap-3 mb-4">
                     <CheckCircle className="w-6 h-6 text-[#16A34A]" />
-                    <span className="font-semibold text-[#16A34A]">Code Verified!</span>
+                    <span className="font-semibold text-[#16A34A]">
+                      Code Verified!
+                    </span>
                   </div>
                   <p className="text-3xl font-bold text-[#111827] mb-1">
-                    {verifiedTx.amount} USDC
+                    {verifiedTx.amount} SOLONA
                   </p>
                   <p className="text-sm text-[#6B7280]">
                     Transfer confirmed • Sender: {verifiedTx.senderAddress}
@@ -270,15 +288,21 @@ export default function ClaimPage() {
                 </div>
 
                 <div className="bg-[#F5F5F5] rounded-2xl p-5 mb-6">
-                  <h3 className="font-semibold text-[#111827] mb-3">How to receive?</h3>
+                  <h3 className="font-semibold text-[#111827] mb-3">
+                    How to receive?
+                  </h3>
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-lg bg-[#B91C1C]/10 flex items-center justify-center shrink-0">
                         <MapPin className="w-4 h-4 text-[#B91C1C]" />
                       </div>
                       <div>
-                        <p className="font-medium text-[#111827]">Cash Pickup</p>
-                        <p className="text-sm text-[#6B7280]">Visit a nearby agent and get cash</p>
+                        <p className="font-medium text-[#111827]">
+                          Cash Pickup
+                        </p>
+                        <p className="text-sm text-[#6B7280]">
+                          Visit a nearby agent and get cash
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
@@ -286,8 +310,12 @@ export default function ClaimPage() {
                         <Wallet className="w-4 h-4 text-[#16A34A]" />
                       </div>
                       <div>
-                        <p className="font-medium text-[#111827]">Wallet Deposit</p>
-                        <p className="text-sm text-[#6B7280]">Instant transfer to your wallet</p>
+                        <p className="font-medium text-[#111827]">
+                          Wallet Deposit
+                        </p>
+                        <p className="text-sm text-[#6B7280]">
+                          Instant transfer to your wallet
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -313,7 +341,8 @@ export default function ClaimPage() {
 
                 <div className="mt-6 pt-6 border-t border-gray-100">
                   <p className="text-xs text-[#6B7280] text-center">
-                    By claiming, you agree to the transfer terms. Funds will be deposited instantly.
+                    By claiming, you agree to the transfer terms. Funds will be
+                    deposited instantly.
                   </p>
                 </div>
               </div>

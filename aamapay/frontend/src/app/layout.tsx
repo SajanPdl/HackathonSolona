@@ -8,9 +8,6 @@ import { Navbar } from '@/components/Landing/Navbar';
 export const metadata: Metadata = {
   title: 'AamaPay - On-Chain Remittance',
   description: 'Send SOL to Nepal, recipient gets cash instantly',
-  icons: {
-    icon: '/favicon.ico',
-  },
 };
 
 export default function RootLayout({

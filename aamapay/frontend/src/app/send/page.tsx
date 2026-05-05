@@ -354,7 +354,7 @@ export default function SendPage() {
                   </div>
                   <div className="flex justify-between text-sm mb-3">
                     <span className="text-[#6B7280]">Estimated Gas</span>
-                    <span className="text-[#16A34A]">~$0.00025</span>
+                    <span className="text-[#16A34A]">~0.00025 SOL</span>
                   </div>
                   <div className="flex justify-between pt-3 border-t border-gray-200">
                     <span className="text-[#111827] font-semibold">Total Cost</span>

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { ArrowRight, Zap, Shield, Users } from 'lucide-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import Link from "next/link";
+import { ArrowRight, Zap, Shield, Users } from "lucide-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
 export function HeroSection() {
   return (
@@ -14,29 +14,36 @@ export function HeroSection() {
               <Zap className="w-4 h-4" />
               Powered by Solana Blockchain
             </div>
-            
+
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#111827] leading-tight mb-6">
               Send money to Nepal
               <span className="text-[#B91C1C]"> instantly</span>
             </h1>
-            
+
             <p className="text-lg text-[#6B7280] mb-8 max-w-lg">
-              Transfer USDC to your family in Nepal. They receive cash from verified agents — fast, secure, and affordable.
+              Transfer SOLONA to your family in Nepal. They receive cash from
+              verified agents — fast, secure, and affordable.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/send" className="bg-[#B91C1C] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#991B1B] transition-colors flex items-center justify-center gap-2">
+              <Link
+                href="/send"
+                className="bg-[#B91C1C] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#991B1B] transition-colors flex items-center justify-center gap-2"
+              >
                 Send Money
                 <ArrowRight className="w-5 h-5" />
               </Link>
-              <Link href="/claim" className="bg-white text-[#111827] px-6 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors border border-gray-200 flex items-center justify-center gap-2">
+              <Link
+                href="/claim"
+                className="bg-white text-[#111827] px-6 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors border border-gray-200 flex items-center justify-center gap-2"
+              >
                 Claim Money
               </Link>
             </div>
 
             <div className="mt-10 flex items-center gap-6">
               <div>
-                <p className="text-2xl font-bold text-[#111827]">$2M+</p>
+                <p className="text-2xl font-bold text-[#111827]">2M+ SOL</p>
                 <p className="text-sm text-[#6B7280]">Transferred</p>
               </div>
               <div className="w-px h-12 bg-gray-200" />
@@ -68,8 +75,10 @@ export function HeroSection() {
                 <div className="p-4 bg-gray-50 rounded-xl">
                   <p className="text-sm text-[#6B7280] mb-1">You Send</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-[#111827]">$100</span>
-                    <span className="text-sm text-[#6B7280]">USDC</span>
+                    <span className="text-2xl font-bold text-[#111827]">
+                      100 SOL
+                    </span>
+                    <span className="text-sm text-[#6B7280]">SOLONA</span>
                   </div>
                 </div>
 
@@ -82,7 +91,9 @@ export function HeroSection() {
                 <div className="p-4 bg-green-50 rounded-xl border-2 border-green-200">
                   <p className="text-sm text-green-600 mb-1">Recipient Gets</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-[#16A34A]">$99.50</span>
+<span className="text-2xl font-bold text-[#16A34A]">
+                      98.50 SOL
+                    </span>
                     <span className="text-sm text-green-600">NPR Cash</span>
                   </div>
                 </div>
@@ -90,11 +101,15 @@ export function HeroSection() {
                 <div className="pt-4 border-t border-gray-100">
                   <div className="flex justify-between text-sm">
                     <span className="text-[#6B7280]">Fee</span>
-                    <span className="text-[#111827] font-medium">$0.50 (0.5%)</span>
+                    <span className="text-[#111827] font-medium">
+                      0.50 SOL (0.5%)
+                    </span>
                   </div>
                   <div className="flex justify-between text-sm mt-2">
                     <span className="text-[#6B7280]">Transfer Time</span>
-                    <span className="text-[#111827] font-medium">~2 seconds</span>
+                    <span className="text-[#111827] font-medium">
+                      ~2 seconds
+                    </span>
                   </div>
                 </div>
               </div>

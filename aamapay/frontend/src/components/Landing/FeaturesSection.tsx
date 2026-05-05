@@ -1,25 +1,25 @@
-import { Zap, Shield, Smartphone, TrendingUp } from 'lucide-react';
+import { Zap, Shield, Smartphone, TrendingUp } from "lucide-react";
 
 const features = [
   {
     icon: Zap,
-    title: 'Lightning Fast',
-    description: 'Transfers complete in under 1 second on Solana blockchain',
+    title: "Lightning Fast",
+    description: "Transfers complete in under 1 second on Solana blockchain",
   },
   {
     icon: Shield,
-    title: 'Bank-Level Security',
-    description: 'Smart contract escrow protects your funds until delivery',
+    title: "Bank-Level Security",
+    description: "Smart contract escrow protects your funds until delivery",
   },
   {
     icon: Smartphone,
-    title: 'Mobile First',
-    description: 'Optimized for mobile wallets used in Nepal and abroad',
+    title: "Mobile First",
+    description: "Optimized for mobile wallets used in Nepal and abroad",
   },
   {
     icon: TrendingUp,
-    title: 'Zero Volatility',
-    description: 'USDC stablecoin keeps value consistent during transfer',
+    title: "Zero Volatility",
+    description: "SOLONA stablecoin keeps value consistent during transfer",
   },
 ];
 

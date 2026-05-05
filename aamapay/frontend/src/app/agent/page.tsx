@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { api } from '@/utils/api';
-import toast, { Toaster } from 'react-hot-toast';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { useWallet } from '@/context/WalletContext';
-import gsap from 'gsap';
-import { 
-  DollarSign, 
-  CheckCircle, 
-  Loader2, 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { api } from "@/utils/api";
+import toast, { Toaster } from "react-hot-toast";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { useWallet } from "@/context/WalletContext";
+import gsap from "gsap";
+import {
+  DollarSign,
+  CheckCircle,
+  Loader2,
   LogOut,
   ChevronRight,
   TrendingUp,
@@ -21,67 +21,82 @@ import {
   Receipt,
   ArrowRight,
   AlertTriangle,
-  Check
-} from 'lucide-react';
+  Check,
+} from "lucide-react";
 
 export default function AgentPage() {
   const { connected, publicKey, disconnect } = useWallet();
-  const [step, setStep] = useState<'connect' | 'login' | 'dashboard'>('connect');
-  const [claimCode, setClaimCode] = useState('');
+  const [step, setStep] = useState<"connect" | "login" | "dashboard">(
+    "connect",
+  );
+  const [claimCode, setClaimCode] = useState("");
   const [verifyResult, setVerifyResult] = useState<any>(null);
   const [recentPayouts, setRecentPayouts] = useState<any[]>([]);
 
   const loginMutation = useMutation({
-    mutationFn: (data: { walletAddress: string }) => api.agents.login(data) as Promise<{ token: string }>,
+    mutationFn: (data: { walletAddress: string }) =>
+      api.agents.login(data) as Promise<{ token: string }>,
     onSuccess: (data) => {
-      localStorage.setItem('aamapay_token', data.token);
-      setStep('dashboard');
-      toast.success('Welcome back!');
+      localStorage.setItem("aamapay_token", data.token);
+      setStep("dashboard");
+      toast.success("Welcome back!");
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Login failed');
+      toast.error(error.message || "Login failed");
     },
   });
 
   const verifyMutation = useMutation({
-    mutationFn: (data: { claimCode: string }) => api.claims.verify(data) as Promise<any>,
+    mutationFn: (data: { claimCode: string }) =>
+      api.claims.verify(data) as Promise<any>,
     onSuccess: (data: any) => {
       if (data.valid) {
         setVerifyResult(data.transaction);
-        gsap.fromTo('.verify-card', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4 });
+        gsap.fromTo(
+          ".verify-card",
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.4 },
+        );
       }
     },
     onError: () => {
-      toast.error('Invalid claim code');
+      toast.error("Invalid claim code");
     },
   });
 
   const redeemMutation = useMutation({
-    mutationFn: (data: { claimCode: string; agentId: string }) => 
-      api.claims.redeem(data, localStorage.getItem('aamapay_token')!) as Promise<any>,
+    mutationFn: (data: { claimCode: string; agentId: string }) =>
+      api.claims.redeem(
+        data,
+        localStorage.getItem("aamapay_token")!,
+      ) as Promise<any>,
     onSuccess: () => {
-      toast.success('Payout confirmed! Funds released.');
-      setRecentPayouts(prev => [{
-        amount: verifyResult.amount,
-        sender: verifyResult.senderAddress,
-        time: 'Just now'
-      }, ...prev.slice(0, 4)]);
+      toast.success("Payout confirmed! Funds released.");
+      setRecentPayouts((prev) => [
+        {
+          amount: verifyResult.amount,
+          sender: verifyResult.senderAddress,
+          time: "Just now",
+        },
+        ...prev.slice(0, 4),
+      ]);
       setVerifyResult(null);
-      setClaimCode('');
+      setClaimCode("");
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Redemption failed');
+      toast.error(error.message || "Redemption failed");
     },
   });
 
   const agentQuery = useQuery({
-    queryKey: ['agent', 'me'],
-    queryFn: () => api.agents.me(localStorage.getItem('aamapay_token')!) as Promise<any>,
-    enabled: step === 'dashboard',
+    queryKey: ["agent", "me"],
+    queryFn: () =>
+      api.agents.me(localStorage.getItem("aamapay_token")!) as Promise<any>,
+    enabled: step === "dashboard",
   });
 
   useEffect(() => {
-    if (connected && publicKey && step === 'connect') {
+    if (connected && publicKey && step === "connect") {
       loginMutation.mutate({ walletAddress: publicKey.toString() });
     }
   }, [connected, publicKey, step]);
@@ -94,7 +109,7 @@ export default function AgentPage() {
   };
 
   const handleConfirmPayout = () => {
-    const agentId = agentQuery.data?.agent?.id || 'agent-001';
+    const agentId = agentQuery.data?.agent?.id || "agent-001";
     redeemMutation.mutate({ claimCode, agentId });
   };
 
@@ -107,16 +122,21 @@ export default function AgentPage() {
             <div className="w-16 h-16 rounded-2xl bg-[#B91C1C]/10 flex items-center justify-center mx-auto mb-6">
               <Users className="w-8 h-8 text-[#B91C1C]" />
             </div>
-            
-            <h1 className="text-2xl font-bold text-[#111827] mb-3">Agent Dashboard</h1>
+
+            <h1 className="text-2xl font-bold text-[#111827] mb-3">
+              Agent Dashboard
+            </h1>
             <p className="text-[#6B7280] mb-8 max-w-sm mx-auto">
               Connect your Phantom wallet to access the agent dashboard
             </p>
-            
+
             <WalletMultiButton className="!bg-[#B91C1C] !hover:bg-[#991B1B] !rounded-xl !w-full !justify-center !py-4" />
-            
+
             <div className="mt-8 pt-6 border-t border-gray-100">
-              <Link href="/agent/register" className="text-[#B91C1C] font-medium text-sm hover:underline">
+              <Link
+                href="/agent/register"
+                className="text-[#B91C1C] font-medium text-sm hover:underline"
+              >
                 Want to become an agent? Register here
               </Link>
             </div>
@@ -133,16 +153,21 @@ export default function AgentPage() {
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-[#111827]">Agent Dashboard</h1>
+            <h1 className="text-2xl font-bold text-[#111827]">
+              Agent Dashboard
+            </h1>
             <p className="text-[#6B7280]">Process cash payouts securely</p>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-[#6B7280] hover:text-[#111827] text-sm flex items-center gap-1">
+            <Link
+              href="/"
+              className="text-[#6B7280] hover:text-[#111827] text-sm flex items-center gap-1"
+            >
               <ChevronRight className="w-4 h-4 rotate-180" />
               Home
             </Link>
-            <button 
-              onClick={disconnect} 
+            <button
+              onClick={disconnect}
               className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-gray-200 text-[#111827] text-sm font-medium hover:bg-gray-50 transition-colors"
             >
               <LogOut className="w-4 h-4" />
@@ -152,25 +177,25 @@ export default function AgentPage() {
         </div>
 
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <StatCard 
+          <StatCard
             icon={DollarSign}
             label="Total Payouts"
             value={agentQuery.data?.agent?.totalPayouts || 0}
             color="#B91C1C"
           />
-          <StatCard 
+          <StatCard
             icon={TrendingUp}
             label="Total Volume"
-            value={`$${agentQuery.data?.agent?.totalVolume?.toFixed(2) || '0.00'}`}
+            value={`$${agentQuery.data?.agent?.totalVolume?.toFixed(2) || "0.00"}`}
             color="#16A34A"
           />
-          <StatCard 
+          <StatCard
             icon={CheckCircle}
             label="Status"
-            value={agentQuery.data?.agent?.isVerified ? 'Verified' : 'Pending'}
-            color={agentQuery.data?.agent?.isVerified ? '#16A34A' : '#F59E0B'}
+            value={agentQuery.data?.agent?.isVerified ? "Verified" : "Pending"}
+            color={agentQuery.data?.agent?.isVerified ? "#16A34A" : "#F59E0B"}
           />
-          <StatCard 
+          <StatCard
             icon={Clock}
             label="Today"
             value={recentPayouts.length.toString()}
@@ -189,7 +214,9 @@ export default function AgentPage() {
                   </div>
                   <div>
                     <h2 className="text-xl font-bold">Verify & Payout</h2>
-                    <p className="text-gray-400 text-sm">Enter customer's claim code to process</p>
+                    <p className="text-gray-400 text-sm">
+                      Enter customer's claim code to process
+                    </p>
                   </div>
                 </div>
               </div>
@@ -204,7 +231,9 @@ export default function AgentPage() {
                       <input
                         type="text"
                         value={claimCode}
-                        onChange={(e) => setClaimCode(e.target.value.toUpperCase())}
+                        onChange={(e) =>
+                          setClaimCode(e.target.value.toUpperCase())
+                        }
                         placeholder="Enter claim code"
                         className="w-full px-4 py-4 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#B91C1C] focus:border-transparent text-center text-xl font-mono tracking-widest"
                       />
@@ -219,7 +248,9 @@ export default function AgentPage() {
 
                     <button
                       type="submit"
-                      disabled={verifyMutation.isPending || claimCode.length < 6}
+                      disabled={
+                        verifyMutation.isPending || claimCode.length < 6
+                      }
                       className="w-full bg-[#B91C1C] text-white py-4 rounded-xl font-medium hover:bg-[#991B1B] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {verifyMutation.isPending ? (
@@ -240,10 +271,12 @@ export default function AgentPage() {
                     <div className="bg-[#16A34A]/5 border-2 border-[#16A34A]/20 rounded-2xl p-6">
                       <div className="flex items-center gap-3 mb-4">
                         <CheckCircle className="w-6 h-6 text-[#16A34A]" />
-                        <span className="font-semibold text-[#16A34A]">Valid Transaction</span>
+                        <span className="font-semibold text-[#16A34A]">
+                          Valid Transaction
+                        </span>
                       </div>
                       <p className="text-4xl font-bold text-[#111827] mb-2">
-                        {verifyResult.amount} USDC
+                        {verifyResult.amount} SOLONA
                       </p>
                       <p className="text-sm text-[#6B7280]">
                         From: {verifyResult.senderAddress}
@@ -251,16 +284,26 @@ export default function AgentPage() {
                     </div>
 
                     <div className="bg-[#F5F5F5] rounded-2xl p-5">
-                      <h4 className="font-semibold text-[#111827] mb-3">Verification Checklist</h4>
+                      <h4 className="font-semibold text-[#111827] mb-3">
+                        Verification Checklist
+                      </h4>
                       <div className="space-y-3">
                         {[
-                          'Customer verified identity',
-                          'Cash handed to customer',
-                          'Customer signed receipt',
+                          "Customer verified identity",
+                          "Cash handed to customer",
+                          "Customer signed receipt",
                         ].map((item, i) => (
-                          <label key={i} className="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" className="w-5 h-5 rounded border-gray-300" />
-                            <span className="text-sm text-[#111827]">{item}</span>
+                          <label
+                            key={i}
+                            className="flex items-center gap-3 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              className="w-5 h-5 rounded border-gray-300"
+                            />
+                            <span className="text-sm text-[#111827]">
+                              {item}
+                            </span>
                           </label>
                         ))}
                       </div>
@@ -287,7 +330,7 @@ export default function AgentPage() {
                       <button
                         onClick={() => {
                           setVerifyResult(null);
-                          setClaimCode('');
+                          setClaimCode("");
                         }}
                         className="w-full bg-[#F5F5F5] text-[#111827] py-4 rounded-xl font-medium hover:bg-gray-200 transition-colors"
                       >
@@ -302,13 +345,20 @@ export default function AgentPage() {
 
           <div className="space-y-6">
             <div className="bg-white rounded-3xl shadow-lg p-6">
-              <h3 className="font-semibold text-[#111827] mb-4">Recent Payouts</h3>
+              <h3 className="font-semibold text-[#111827] mb-4">
+                Recent Payouts
+              </h3>
               {recentPayouts.length > 0 ? (
                 <div className="space-y-3">
                   {recentPayouts.map((payout, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-[#F5F5F5] rounded-xl">
+                    <div
+                      key={i}
+                      className="flex items-center justify-between p-3 bg-[#F5F5F5] rounded-xl"
+                    >
                       <div>
-                        <p className="font-medium text-[#111827]">{payout.amount} USDC</p>
+                        <p className="font-medium text-[#111827]">
+                          {payout.amount} SOLONA
+                        </p>
                         <p className="text-xs text-[#6B7280]">{payout.time}</p>
                       </div>
                       <CheckCircle className="w-5 h-5 text-[#16A34A]" />
@@ -324,26 +374,37 @@ export default function AgentPage() {
             </div>
 
             <div className="bg-white rounded-3xl shadow-lg p-6">
-              <h3 className="font-semibold text-[#111827] mb-4">Quick Actions</h3>
+              <h3 className="font-semibold text-[#111827] mb-4">
+                Quick Actions
+              </h3>
               <div className="space-y-3">
-                <Link href="/agent/register" className="flex items-center justify-between p-4 bg-[#F5F5F5] rounded-xl hover:bg-gray-200 transition-colors">
+                <Link
+                  href="/agent/register"
+                  className="flex items-center justify-between p-4 bg-[#F5F5F5] rounded-xl hover:bg-gray-200 transition-colors"
+                >
                   <div className="flex items-center gap-3">
                     <Users className="w-5 h-5 text-[#B91C1C]" />
-                    <span className="text-sm font-medium text-[#111827]">Update Profile</span>
+                    <span className="text-sm font-medium text-[#111827]">
+                      Update Profile
+                    </span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-400" />
                 </Link>
                 <button className="w-full flex items-center justify-between p-4 bg-[#F5F5F5] rounded-xl hover:bg-gray-200 transition-colors">
                   <div className="flex items-center gap-3">
                     <TrendingUp className="w-5 h-5 text-[#16A34A]" />
-                    <span className="text-sm font-medium text-[#111827]">View Earnings</span>
+                    <span className="text-sm font-medium text-[#111827]">
+                      View Earnings
+                    </span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-400" />
                 </button>
                 <button className="w-full flex items-center justify-between p-4 bg-[#F5F5F5] rounded-xl hover:bg-gray-200 transition-colors">
                   <div className="flex items-center gap-3">
                     <AlertTriangle className="w-5 h-5 text-[#F59E0B]" />
-                    <span className="text-sm font-medium text-[#111827]">Report Issue</span>
+                    <span className="text-sm font-medium text-[#111827]">
+                      Report Issue
+                    </span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-400" />
                 </button>
@@ -360,7 +421,7 @@ function StatCard({ icon: Icon, label, value, subtitle, color }: any) {
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm">
       <div className="flex items-center gap-4">
-        <div 
+        <div
           className="w-12 h-12 rounded-xl flex items-center justify-center"
           style={{ backgroundColor: `${color}15` }}
         >

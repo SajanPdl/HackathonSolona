@@ -70,11 +70,11 @@ export function AgentCTASection() {
               </div>
               <div className="bg-white/5 rounded-xl p-4">
                 <p className="text-gray-400 text-sm mb-1">This Month</p>
-                <p className="text-2xl font-bold text-[#16A34A]">$8,430</p>
+                <p className="text-2xl font-bold text-[#16A34A]">8,430 SOL</p>
               </div>
               <div className="bg-white/5 rounded-xl p-4">
                 <p className="text-gray-400 text-sm mb-1">Commission</p>
-                <p className="text-2xl font-bold text-white">$42.15</p>
+                <p className="text-2xl font-bold text-white">42.15 SOL</p>
               </div>
               <div className="bg-white/5 rounded-xl p-4">
                 <p className="text-gray-400 text-sm mb-1">Rating</p>
