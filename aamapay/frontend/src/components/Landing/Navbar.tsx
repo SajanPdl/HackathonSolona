@@ -23,6 +23,9 @@ export function Navbar() {
             <Link href="/dashboard" className="text-[#6B7280] hover:text-[#B91C1C] transition-colors text-sm font-medium">
               Dashboard
             </Link>
+            <Link href="/profile" className="text-[#6B7280] hover:text-[#B91C1C] transition-colors text-sm font-medium">
+              Profile
+            </Link>
             <Link href="#agents" className="text-[#6B7280] hover:text-[#B91C1C] transition-colors text-sm font-medium">
               For Agents
             </Link>

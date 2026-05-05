@@ -9,14 +9,27 @@ datasource db {
 
 model User {
   id            String    @id @default(uuid())
-  walletAddress String    @unique
-  phone         String?   @unique
   email         String?   @unique
+  phone         String?   @unique
+  name          String?
+  googleId      String?   @unique
   kycStatus     String    @default("PENDING")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  isVerified   Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  wallets      Wallet[]
   sentTransactions   Transaction[] @relation("senderTransactions")
   receivedTransactions Transaction[] @relation("recipientTransactions")
+}
+
+model Wallet {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address     String   @unique
+  type        String   @default("SOLANA")
+  isPrimary   Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }
 
 model Agent {
@@ -25,62 +38,62 @@ model Agent {
   name          String
   businessName  String?
   phone         String    @unique
-  email         String?
-  location      String
-  lat           Float?
-  lng           Float?
-  isVerified    Boolean   @default(false)
-  isActive      Boolean   @default(true)
-  totalPayouts  Int       @default(0)
-  totalVolume   Float     @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  redemptions   Redemption[]
+  email        String?
+  location     String
+  lat          Float?
+  lng          Float?
+  isVerified  Boolean   @default(false)
+  isActive    Boolean   @default(true)
+  totalPayouts Int      @default(0)
+  totalVolume Float     @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  redemptions  Redemption[]
 }
 
 model Transaction {
   id              String    @id @default(uuid())
   senderId        String
   sender          User      @relation("senderTransactions", fields: [senderId], references: [id])
-  recipientId     String?
-  recipient       User?     @relation("recipientTransactions", fields: [recipientId], references: [id])
+  recipientId    String?
+  recipient      User?     @relation("recipientTransactions", fields: [recipientId], references: [id])
   recipientIdentifier String?
-  amount          Float
-  fee             Float
-  totalAmount     Float
-  currency        String    @default("SOL")
-  status          String    @default("PENDING")
-  solanaTx        String?
-  escrowAddress   String?
-  claimCodeHash   String?
+  amount         Float
+  fee            Float
+  totalAmount   Float
+  currency     String    @default("SOL")
+  status       String    @default("PENDING")
+  solanaTx     String?
+  escrowAddress String?
+  claimCodeHash  String?
   claimCodeExpiry DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  redemptions     Redemption[]
-  claimCodes    ClaimCode[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  redemptions  Redemption[]
+  claimCodes   ClaimCode[]
 }
 
 model ClaimCode {
-  id              String    @id @default(uuid())
-  transactionId   String
-  transaction    Transaction @relation(fields: [transactionId], references: [id])
-  codeHash        String    @unique
-  codePlain       String
-  expiresAt      DateTime
-  isUsed        Boolean   @default(false)
-  usedAt        DateTime?
-  createdAt     DateTime  @default(now())
+  id            String    @id @default(uuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  codeHash      String    @unique
+  codePlain    String
+  expiresAt    DateTime
+  isUsed      Boolean   @default(false)
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
 }
 
 model Redemption {
-  id              String    @id @default(uuid())
-  transactionId   String
-  transaction     Transaction @relation(fields: [transactionId], references: [id])
-  agentId         String
-  agent           Agent     @relation(fields: [agentId], references: [id])
-  amount          Float
-  status          String    @default("PENDING")
-  solanaTx        String?
-  createdAt       DateTime  @default(now())
-  completedAt     DateTime?
+  id            String    @id @default(uuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  agentId       String
+  agent         Agent     @relation(fields: [agentId], references: [id])
+  amount       Float
+  status       String    @default("PENDING")
+  solanaTx     String?
+  createdAt    DateTime  @default(now())
+  completedAt  DateTime?
 }
