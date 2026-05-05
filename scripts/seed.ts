@@ -1,5 +1,4 @@
-require('dotenv').config();
-const prisma = require('../src/prismaClient');
+import prisma from '../src/prismaClient';
 
 async function main() {
   const alice = await prisma.user.create({ data: { email: 'alice@example.com', name: 'Alice' } });
@@ -8,5 +7,5 @@ async function main() {
 }
 
 main()
-  .catch(e => { console.error(e); process.exit(1); })
+  .catch((e) => { console.error(e); process.exit(1); })
   .finally(() => prisma.$disconnect());
