@@ -3,6 +3,7 @@ import '@solana/wallet-adapter-react-ui/styles.css';
 import type { Metadata } from 'next';
 import { WalletProvider } from '@/context/WalletContext';
 import { QueryProvider } from '@/components/QueryProvider';
+import { Navbar } from '@/components/Landing/Navbar';
 
 export const metadata: Metadata = {
   title: 'AamaPay - On-Chain Remittance',
@@ -22,6 +23,7 @@ export default function RootLayout({
       <body>
         <QueryProvider>
           <WalletProvider>
+            <Navbar />
             {children}
           </WalletProvider>
         </QueryProvider>
