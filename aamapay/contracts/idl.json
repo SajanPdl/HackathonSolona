@@ -1,0 +1,89 @@
+{
+  "version": "0.1.0",
+  "name": "aamapay_contract",
+  "instructions": [
+    {
+      "name": "createTransaction",
+      "accounts": [
+        { "name": "sender", "isSigner": true },
+        { "name": "senderTokenAccount", "isMut": true },
+        { "name": "escrowAccount", "isMut": true },
+        { "name": "escrowTokenAccount", "isMut": true },
+        { "name": "tokenProgram" }
+      ],
+      "args": [
+        { "name": "amount", "type": "u64" }
+      ]
+    },
+    {
+      "name": "verifyAndRelease",
+      "accounts": [
+        { "name": "agent", "isSigner": true },
+        { "name": "escrowTokenAccount", "isMut": true },
+        { "name": "agentTokenAccount", "isMut": true },
+        { "name": "tokenProgram" }
+      ],
+      "args": [
+        { "name": "claimCodeHash", "type": "bytes" }
+      ]
+    },
+    {
+      "name": "cancelTransaction",
+      "accounts": [
+        { "name": "sender", "isSigner": true },
+        { "name": "escrowTokenAccount", "isMut": true },
+        { "name": "senderTokenAccount", "isMut": true },
+        { "name": "tokenProgram" }
+      ],
+      "args": []
+    },
+    {
+      "name": "initializeEscrow",
+      "accounts": [
+        { "name": "escrowAccount", "isMut": true },
+        { "name": "authority", "isSigner": true },
+        { "name": "treasury" },
+        { "name": "systemProgram" }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "EscrowAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "authority", "type": "publicKey" },
+          { "name": "treasury", "type": "publicKey" },
+          { "name": "totalTransactions", "type": "u64" },
+          { "name": "isPaused", "type": "bool" }
+        ]
+      }
+    },
+    {
+      "name": "TransactionAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "sender", "type": "publicKey" },
+          { "name": "recipient", "type": "publicKey" },
+          { "name": "amount", "type": "u64" },
+          { "name": "fee", "type": "u64" },
+          { "name": "status", "type": "string" },
+          { "name": "claimCodeHash", "type": "bytes" },
+          { "name": "agent", "type": { "option": "publicKey" } },
+          { "name": "createdAt", "type": "i64" },
+          { "name": "expiresAt", "type": "i64" }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    { "code": 100, "name": "InvalidAmount", "msg": "Amount must be greater than 0" },
+    { "code": 101, "name": "TransactionExpired", "msg": "Transaction has expired" },
+    { "code": 102, "name": "InvalidClaimCode", "msg": "Invalid or expired claim code" },
+    { "code": 103, "name": "UnauthorizedAgent", "msg": "Agent is not authorized" },
+    { "code": 104, "name": "EscrowPaused", "msg": "Escrow is currently paused" }
+  ]
+}

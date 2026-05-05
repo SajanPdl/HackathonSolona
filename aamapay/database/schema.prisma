@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String    @id @default(uuid())
+  walletAddress String    @unique
+  phone         String?   @unique
+  email         String?   @unique
+  kycStatus     String    @default("PENDING")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sentTransactions   Transaction[] @relation("senderTransactions")
+  receivedTransactions Transaction[] @relation("recipientTransactions")
+}
+
+model Agent {
+  id            String    @id @default(uuid())
+  walletAddress String    @unique
+  name          String
+  businessName  String?
+  phone         String    @unique
+  email         String?
+  location      String
+  lat           Float?
+  lng           Float?
+  isVerified    Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  totalPayouts  Int       @default(0)
+  totalVolume   Float     @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  redemptions   Redemption[]
+}
+
+model Transaction {
+  id              String    @id @default(uuid())
+  senderId        String
+  sender          User      @relation("senderTransactions", fields: [senderId], references: [id])
+  recipientId     String?
+  recipient       User?     @relation("recipientTransactions", fields: [recipientId], references: [id])
+  recipientIdentifier String?
+  amount          Float
+  fee             Float
+  totalAmount     Float
+  currency        String    @default("USDC")
+  status          String    @default("PENDING")
+  solanaTx        String?
+  escrowAddress   String?
+  claimCodeHash   String?
+  claimCodeExpiry DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  redemptions     Redemption[]
+}
+
+model ClaimCode {
+  id              String    @id @default(uuid())
+  transactionId   String
+  codeHash        String    @unique
+  codePlain       String
+  expiresAt       DateTime
+  isUsed          Boolean   @default(false)
+  usedAt          DateTime?
+  createdAt       DateTime  @default(now())
+}
+
+model Redemption {
+  id              String    @id @default(uuid())
+  transactionId   String
+  transaction     Transaction @relation(fields: [transactionId], references: [id])
+  agentId         String
+  agent           Agent     @relation(fields: [agentId], references: [id])
+  amount          Float
+  status          String    @default("PENDING")
+  solanaTx        String?
+  createdAt       DateTime  @default(now())
+  completedAt     DateTime?
+}
