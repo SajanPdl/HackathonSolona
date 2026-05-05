@@ -94,7 +94,7 @@ export default function SendPage() {
     }
 
     if (amountNum < 1) {
-      toast.error('Minimum transfer amount is 1 USDC');
+      toast.error('Minimum transfer amount is 1 SOL');
       return;
     }
 
@@ -139,13 +139,13 @@ export default function SendPage() {
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[#6B7280]">Amount Sent</span>
                 <span className="text-2xl font-bold text-[#111827]">
-                  {txData.transaction.amount} USDC
+                  {txData.transaction.amount} SOL
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[#6B7280]">Fee</span>
                 <span className="text-[#111827]">
-                  {txData.transaction.fee} USDC
+                  {txData.transaction.fee} SOL
                 </span>
               </div>
             </div>
@@ -321,7 +321,7 @@ export default function SendPage() {
 
               <div className="mb-5">
                 <label className="block text-sm font-medium text-[#111827] mb-2">
-                  Amount (USDC)
+                  Amount (SOL)
                 </label>
                 <div className="relative">
                   <input
@@ -334,11 +334,11 @@ export default function SendPage() {
                     className="w-full px-4 py-3.5 pr-16 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#B91C1C] focus:border-transparent transition-all text-[#111827] text-lg font-semibold"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B7280] font-medium">
-                    USDC
+                    SOL
                   </span>
                 </div>
                 <p className="text-xs text-[#6B7280] mt-1.5">
-                  Minimum: 1 USDC
+                  Minimum: 1 SOL
                 </p>
               </div>
 
@@ -346,11 +346,11 @@ export default function SendPage() {
                 <div className="bg-[#F5F5F5] rounded-2xl p-5 mb-6">
                   <div className="flex justify-between text-sm mb-3">
                     <span className="text-[#6B7280]">Amount</span>
-                    <span className="text-[#111827] font-medium">{amount} USDC</span>
+                    <span className="text-[#111827] font-medium">{amount} SOL</span>
                   </div>
                   <div className="flex justify-between text-sm mb-3">
                     <span className="text-[#6B7280]">Platform Fee (0.5%)</span>
-                    <span className="text-[#111827]">{fee.toFixed(2)} USDC</span>
+                    <span className="text-[#111827]">{fee.toFixed(2)} SOL</span>
                   </div>
                   <div className="flex justify-between text-sm mb-3">
                     <span className="text-[#6B7280]">Estimated Gas</span>
@@ -358,7 +358,7 @@ export default function SendPage() {
                   </div>
                   <div className="flex justify-between pt-3 border-t border-gray-200">
                     <span className="text-[#111827] font-semibold">Total Cost</span>
-                    <span className="text-[#B91C1C] font-bold text-lg">{total.toFixed(2)} USDC</span>
+                    <span className="text-[#B91C1C] font-bold text-lg">{total.toFixed(2)} SOL</span>
                   </div>
                 </div>
               )}
@@ -375,7 +375,7 @@ export default function SendPage() {
                     </>
                   ) : (
                     <>
-                      Send {amount ? `${amount} USDC` : ''}
+                      Send {amount ? `${amount} SOL` : ''}
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}

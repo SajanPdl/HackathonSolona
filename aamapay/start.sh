@@ -1,31 +1,19 @@
 #!/bin/bash
 
-echo "🔄 Starting AamaPay..."
-
-# Kill any existing processes on these ports
-fuser -k 3000/tcp 2>/dev/null
-fuser -k 3001/tcp 2>/dev/null
+# Kill existing
+pkill -f "next" 2>/dev/null
+pkill -f "tsx" 2>/dev/null  
 sleep 1
 
-# Get current directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Build
+rm -rf frontend/.next
+cd frontend && npm run build
 
-# Start backend
-echo "📡 Starting backend (port 3001)..."
-cd "$SCRIPT_DIR/backend" && npx tsx src/index.ts &
-sleep 2
+# Start servers
+cd ../backend && npx tsx src/index.ts &
+cd ../frontend && npx next dev -p 3000 &
 
-# Start frontend
-echo "🌐 Starting frontend (port 3000)..."
-cd "$SCRIPT_DIR/frontend" && node node_modules/next/dist/bin/next start -p 3000 &
-sleep 2
+sleep 4
 
 echo ""
-echo "✅ AamaPay is running!"
-echo "   Frontend: http://localhost:3000"
-echo "   Backend:  http://localhost:3001"
-echo ""
-echo "Press Ctrl+C to stop"
-
-# Wait
-wait
+echo "✅ AamaPay running at http://localhost:3000"

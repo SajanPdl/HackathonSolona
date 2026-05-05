@@ -7,33 +7,7 @@ import { verifyClaimCode } from '../utils/crypto.js';
 
 const router = Router();
 
-router.post('/generate', authenticate, asyncHandler(async (req: AuthRequest, res) => {
-  const { transactionId } = z.object({ transactionId: z.string() }).parse(req.body);
-
-  const transaction = await prisma.transaction.findUnique({
-    where: { id: transactionId },
-    include: { sender: true }
-  });
-
-  if (!transaction) {
-    return res.status(404).json({ error: 'Transaction not found' });
-  }
-
-  if (transaction.senderId !== req.userId) {
-    return res.status(403).json({ error: 'Not authorized to generate claim code' });
-  }
-
-  if (transaction.status !== 'PENDING') {
-    return res.status(400).json({ error: 'Transaction is not pending' });
-  }
-
-  res.json({
-    message: 'Claim code already exists',
-    claimCodeExpiry: transaction.claimCodeExpiry
-  });
-}));
-
-router.post('/verify', asyncHandler(async (req, res) => {
+router.post('/verify', asyncHandler(async (req: any, res: any) => {
   const { claimCode } = z.object({ claimCode: z.string() }).parse(req.body);
 
   const claimCodes = await prisma.claimCode.findMany({
@@ -50,7 +24,7 @@ router.post('/verify', asyncHandler(async (req, res) => {
       return res.json({
         valid: true,
         transaction: {
-          id: cc.transaction.id,
+          id: cc.transactionId,
           amount: cc.transaction.amount,
           currency: cc.transaction.currency,
           senderAddress: cc.transaction.sender.walletAddress.substring(0, 8) + '...',
@@ -63,7 +37,7 @@ router.post('/verify', asyncHandler(async (req, res) => {
   res.status(400).json({ valid: false, error: 'Invalid or expired claim code' });
 }));
 
-router.post('/redeem', authenticate, asyncHandler(async (req: AuthRequest, res) => {
+router.post('/redeem', asyncHandler(async (req: AuthRequest, res: any) => {
   const { claimCode, agentId } = z.object({
     claimCode: z.string(),
     agentId: z.string(),
@@ -99,35 +73,35 @@ router.post('/redeem', authenticate, asyncHandler(async (req: AuthRequest, res) 
     return res.status(400).json({ error: 'Transaction is not available for redemption' });
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.claimCode.update({
-      where: { id: matchedClaimCode!.id },
-      data: { isUsed: true, usedAt: new Date() }
-    });
+  await prisma.claimCode.update({
+    where: { id: matchedClaimCode.id },
+    data: { isUsed: true, usedAt: new Date() }
+  });
 
-    await tx.transaction.update({
-      where: { id: transaction.id },
-      data: {
-        status: 'CLAIMED',
-        recipientId: req.userId,
-        redemptions: {
-          create: {
-            agentId,
-            amount: transaction.amount,
-            status: 'COMPLETED',
-            completedAt: new Date()
-          }
-        }
-      }
-    });
+  await prisma.transaction.update({
+    where: { id: transaction.id },
+    data: {
+      status: 'CLAIMED',
+      recipientId: req.userId,
+    }
+  });
 
-    await tx.agent.update({
-      where: { id: agentId },
-      data: {
-        totalPayouts: { increment: 1 },
-        totalVolume: { increment: transaction.amount }
-      }
-    });
+  await prisma.redemption.create({
+    data: {
+      agentId,
+      transactionId: transaction.id,
+      amount: transaction.amount,
+      status: 'COMPLETED',
+      completedAt: new Date()
+    }
+  });
+
+  await prisma.agent.update({
+    where: { id: agentId },
+    data: {
+      totalPayouts: { increment: 1 },
+      totalVolume: { increment: transaction.amount }
+    }
   });
 
   res.json({

@@ -114,7 +114,7 @@ router.get('/:id', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   });
 }));
 
-router.get('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
+router.get('/', asyncHandler(async (req: AuthRequest, res) => {
   const { status, type } = req.query;
 
   const where: any = {};

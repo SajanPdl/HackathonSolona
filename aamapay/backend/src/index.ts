@@ -7,6 +7,7 @@ import { authRouter } from './routes/auth.js';
 import { transactionRouter } from './routes/transactions.js';
 import { claimRouter } from './routes/claims.js';
 import { agentRouter } from './routes/agents.js';
+import { userRouter } from './routes/users.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -32,6 +33,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/transactions', transactionRouter);
 app.use('/api/claims', claimRouter);
 app.use('/api/agents', agentRouter);
+app.use('/api/users', userRouter);
 
 app.get('/api/health', (_, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

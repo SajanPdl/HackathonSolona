@@ -45,7 +45,7 @@ export const api = {
   },
   claims: {
     verify: (data: any) => apiRequest('/api/claims/verify', { method: 'POST', body: data }),
-    redeem: (data: any, token: string) => apiRequest('/api/claims/redeem', { method: 'POST', body: data, token }),
+    redeem: (data: any) => apiRequest('/api/claims/redeem', { method: 'POST', body: data }),
   },
   agents: {
     register: (data: any) => apiRequest('/api/agents/register', { method: 'POST', body: data }),

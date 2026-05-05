@@ -36,7 +36,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
-  const wallets = useMemo(() => [new PhantomWalletAdapter()], []);
+  const wallets = useMemo(() => {
+    return [new PhantomWalletAdapter()];
+  }, []);
 
   if (!mounted) {
     return (
@@ -56,7 +58,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <SolanaWalletProvider wallets={wallets} autoConnect={false} onError={(e) => console.log('Wallet error:', e)}>
+    <SolanaWalletProvider wallets={wallets} autoConnect={false}>
       <WalletModalProvider>
         <WalletContextProvider>{children}</WalletContextProvider>
       </WalletModalProvider>

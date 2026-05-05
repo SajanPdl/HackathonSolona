@@ -6,7 +6,7 @@ import { QueryProvider } from '@/components/QueryProvider';
 
 export const metadata: Metadata = {
   title: 'AamaPay - On-Chain Remittance',
-  description: 'Send USDC to Nepal, recipient gets cash instantly',
+  description: 'Send SOL to Nepal, recipient gets cash instantly',
   icons: {
     icon: '/favicon.ico',
   },

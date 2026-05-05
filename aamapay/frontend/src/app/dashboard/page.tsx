@@ -331,7 +331,7 @@ export default function DashboardPage() {
               <ol className="space-y-3 text-sm">
                 <li className="flex items-start gap-2">
                   <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">1</span>
-                  <span>Send USDC to Nepal instantly</span>
+                  <span>Send SOL to Nepal instantly</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">2</span>

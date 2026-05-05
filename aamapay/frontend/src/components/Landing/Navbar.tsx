@@ -30,6 +30,9 @@ export function Navbar() {
               <Activity className="w-4 h-4" />
               Demo
             </Link>
+            <Link href="/admin" className="text-[#6B7280] hover:text-[#B91C1C] transition-colors text-sm font-medium">
+              Admin
+            </Link>
             <Link href="/send" className="bg-[#B91C1C] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#991B1B] transition-colors flex items-center gap-2">
               <Wallet className="w-4 h-4" />
               Get Started

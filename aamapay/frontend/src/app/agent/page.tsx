@@ -94,7 +94,7 @@ export default function AgentPage() {
   };
 
   const handleConfirmPayout = () => {
-    const agentId = agentQuery.data?.agent?.id || 'default-agent';
+    const agentId = agentQuery.data?.agent?.id || 'agent-001';
     redeemMutation.mutate({ claimCode, agentId });
   };
 
