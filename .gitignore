@@ -13,7 +13,7 @@ coverage/
 .env.*
 .env.local
 .next
-
+spec.md
 # Python
 __pycache__/
 *.py[cod]
