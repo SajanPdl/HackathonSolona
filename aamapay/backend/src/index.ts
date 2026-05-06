@@ -43,6 +43,7 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`AamaPay API running on port ${PORT}`);
+  console.log('Test endpoint: curl -X POST http://localhost:3001/api/transactions/create -H "Content-Type: application/json" -d \'{"amount": 0.1}\'');
 });
 
 export default app;
