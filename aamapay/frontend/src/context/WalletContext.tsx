@@ -8,7 +8,6 @@ import {
   useWallet as useSolanaWallet,
 } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 
 interface WalletContextType {
   connected: boolean;
@@ -18,6 +17,7 @@ interface WalletContextType {
   disconnect: () => void;
   signTransaction: (tx: Transaction) => Promise<Transaction>;
   sendTransaction: (tx: Transaction, connection: Connection) => Promise<string>;
+  signMessage?: (message: Uint8Array) => Promise<Uint8Array>;
 }
 
 const WalletContext = createContext<WalletContextType | null>(null);
@@ -37,7 +37,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const wallets = useMemo(() => {
-    return [new PhantomWalletAdapter()];
+    return [];
   }, []);
 
   if (!mounted) {
@@ -77,6 +77,7 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
     disconnect: wallet.disconnect,
     signTransaction: wallet.signTransaction ? wallet.signTransaction.bind(wallet) : async (tx) => tx,
     sendTransaction: wallet.sendTransaction ? wallet.sendTransaction.bind(wallet) : async () => '',
+    signMessage: wallet.signMessage ? wallet.signMessage.bind(wallet) : undefined,
   }), [wallet]);
 
   return (
