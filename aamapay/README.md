@@ -2,125 +2,424 @@
 
 ## What is AamaPay?
 
-AamaPay is a web application that lets you send money (in SOL cryptocurrency) to Nepal instantly. The recipient can then get cash from a local agent using a special code. No banks, no waiting days, just fast and simple transfers.
+AamaPay is a blockchain-powered remittance platform that enables users to send **SOL (Solana cryptocurrency)** to Nepal, where recipients can withdraw cash from local merchant agents using a secure claim code system. No bank accounts required - just fast, secure, and instant transfers.
 
 ---
 
-## How It Works (Simple Version)
+## 🎯 Mission
+
+Enable financial inclusion for the Nepal diaspora by providing instant, low-cost remittance powered by blockchain technology.
+
+---
+
+## How It Works (Step by Step)
 
 ### For Senders:
-1. **Connect your wallet** - Use Phantom wallet (like a digital bank account)
-2. **Enter how much to send** - Put the amount in SOL
-3. **Get a claim code** - A special code is generated for the recipient
-4. **Share the code** - Tell the recipient the code (via WhatsApp, SMS, etc.)
-5. **Done!** - Money leaves your wallet instantly
+1. **Connect Wallet** - Connect Phantom wallet (Solana)
+2. **Enter Amount** - Specify how much SOL to send
+3. **Add Recipient** - Enter recipient's phone/email/wallet (optional)
+4. **Generate Claim Code** - System creates a unique, secure code
+5. **Share Code** - Send the claim code to recipient via any channel
+6. **Done!** - Transaction confirmed on-chain
 
 ### For Recipients:
-1. **Go to claim page** - Enter the claim code
-2. **Verify** - See how much money you're receiving
-3. **Meet an agent** - Find a nearby AamaPay agent
-4. **Get cash** - Show the code, get your money in Nepali Rupees
+1. **Visit Claim Page** - Go to /claim on website
+2. **Enter Code** - Input the claim code received
+3. **Verify** - Confirm amount and sender details
+4. **Locate Agent** - Find nearby AamaPay agent
+5. **Get Cash** - Show code, receive NPR equivalent
 
 ### For Agents:
-1. **Register** - Sign up as a cash pickup point
-2. **Verify code** - When someone comes with a code
-3. **Give cash** - Pay them the Nepalese Rupees equivalent
-4. **Get commission** - Earn a small fee for each transaction
+1. **Register** - Sign up as AamaPay agent
+2. **Get Verified** - Complete KYC verification
+3. **Receive Codes** - Customers bring claim codes
+4. **Verify & Payout** - Validate and give cash
+5. **Get Commission** - Earn 0.5% per transaction
 
 ---
 
-## Technical Overview
+## 🔐 Claim Code System - Full Logic
 
-### What Technologies We Use:
+### Code Generation Algorithm:
 
-| Part | Technology | Purpose |
-|------|-----------|---------|
-| Frontend | Next.js 14 | Website & UI |
-| Backend | Node.js + Express | API Server |
-| Database | SQLite (dev), PostgreSQL (prod) | Data Storage |
-| Wallet | Phantom (Solana) | Connect wallet |
-| Blockchain | Solana Network | Verify transactions |
-
-### System Flow:
+The claim code is generated using a **cryptographically secure random string** combined with **hashing**:
 
 ```
-┌─────────────┐      ┌─────────────┐      ┌─────────────┐
-│  Sender    │ ───► │  Backend  │ ───► │ Blockchain│
-│  (Wallet) │      │  (API)   │      │ (Solana)  │
-└─────────────┘      └─────────────┘      └─────────────┘
-                           │
-                           ▼
-                    ┌─────────────┐
-                    │ Claim Code │ ───► Recipient gets cash
-                    │ Generator │
-                    └─────────────┘
+1. Generate random 12-character string
+   └── Characters: A-Z, 0-9 (uppercase only)
+   └── Example: "VM0OXICTDGKB"
+
+2. Create hash of the code for storage
+   └── Use SHA-256 for one-way encryption
+   └── codeHash = SHA256(codePlain)
+   └── Store: codeHash in database (NOT plain code)
+
+3. Generate unique transaction ID
+   └── Format: "AAP" + timestamp + random
+   └── Example: "AAP1778001115387D118"
+
+4. Set expiration (24 hours from creation)
+   └── expiry = now + 24 hours
+
+5. Associate with transaction
+   └── Link code to specific amount/sender
 ```
 
-### Pages on the Website:
+### Code Verification Process:
 
-| URL | Purpose |
-|-----|--------|
-| `/` | Landing page, how it works |
-| `/send` | Send money to Nepal |
-| `/claim` | Enter code to get money |
-| `/receive` | Receive to wallet directly |
-| `/agent` | Agent dashboard |
-| `/agent/register` | Become an agent |
-| `/dashboard` | See your transactions |
-| `/profile` | User profile, link email/phone |
-| `/admin` | Admin panel |
-| `/simulation` | Demo of live transactions |
+```
+User enters claim code
+         │
+         ▼
+Hash the input code
+         │
+         ▼
+Compare with stored hash
+         │
+         ▼
+Check expiration
+         │
+         ▼
+Check if already used
+         │
+         ▼
+Return: VALID or INVALID
+```
+
+### Security Features:
+- ⏰ **24-hour expiry** - Codes expire after 1 day
+- 🔒 **Hashed storage** - Plain codes never stored
+- ♻️ **One-time use** - Codes can only be redeemed once
+- 🏦 **Agent verification** - Only verified agents can redeem
 
 ---
 
-## Database Schema
+## 🏗️ Architecture
+
+### System Architecture:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        FRONTEND (Next.js 14)                     │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
+│  │  /send   │  │ /claim   │  │ /agent  │  │/profile │       │
+│  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘       │
+│       │             │             │             │              │
+│       └─────────────┴─────────���───┴─────────────┘              │
+│                         │                                     │
+│                    WalletContext                              │
+│              (Phantom Wallet Adapter)                         │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │
+                    HTTP API (REST)
+                          │
+┌─────────────────────────┴───────────────────────────────────────┐
+│                      BACKEND (Node.js + Express)                │
+│  ┌──────────────────────────────────────────────────────────┐    │
+│  │                      Routes                              │    │
+│  │  ┌─────────┐ ┌──────────┐ ┌────────┐ ┌─────────┐        │    │
+│  │  │  Auth   │ │Transaction│ │ Claims │ │Agents  │        │    │
+│  │  └────┬────┘ └────┬─────┘ └────┬───┘ └────┬────┘        │    │
+│  └───────┼───────────┼───────────┼──────────┼───────────────┘    │
+│          │           │           │          │                   │
+│  ┌───────┴───────────┴───────────┴──────────┴───────────────┐  │
+│  │                    Middleware                             │    │
+│  │  ┌─────────────┐  ┌────────────┐  ┌─────────────────┐   │    │
+│  │  │ Rate Limit  │  │   Auth     │  │  Error Handler   │   │    │
+│  │  └─────────────┘  └────────────┘  └─────────────────┘   │    │
+│  └────────────────────────┬──────────────────────────────────┘    │
+└──────────────────────────┼──────────────────────────────────────────┘
+                         │
+                    Database (SQLite/PostgreSQL)
+                         │
+┌────────────────────────┴──────────────────────────────────────┐
+│                  PRISMA ORM                                      │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
+│  │  Users   │  │Transactions│ │ClaimCodes│ │ Agents   │       │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘       │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### Technology Stack:
+
+| Layer | Technology | Purpose |
+|-------|-------------|---------|
+| Frontend Framework | Next.js 14 | React-based UI |
+| Styling | Tailwind CSS | Utility-first CSS |
+| Animations | GSAP | Scroll animations |
+| State Management | React Query | Server state |
+| Wallet | Phantom (Solana) | Crypto wallet |
+| Backend | Node.js + Express | API server |
+| Database | SQLite (dev) / PostgreSQL (prod) | SQL database |
+| ORM | Prisma | Database access |
+| Authentication | JWT (Bearer token) | Stateless auth |
+
+---
+
+## 💻 Full MVP Features
+
+### User Features:
+- ✅ Connect Solana wallet (Phantom)
+- ✅ Send SOL to Nepal
+- ✅ Generate secure claim codes
+- ✅ Share codes via any channel
+- ✅ View transaction history
+- ✅ Link email & phone to account
+- ✅ Add multiple wallets
+- ✅ Profile management
+
+### Recipient Features:
+- ✅ Verify claim code validity
+- ✅ View transaction amount
+- ✅ Find nearby agents
+- ✅ Direct wallet deposit option
+
+### Agent Features:
+- ✅ Agent registration
+- ✅ Dashboard with stats
+- ✅ Code verification
+- ✅ Payout processing
+- ✅ Transaction history
+- ✅ Commission tracking
+
+### Admin Features:
+- ✅ View all transactions
+- ✅ Manage users
+- ✅ Verify agents
+- ✅ Platform analytics
+- ✅ Agent approval
+
+---
+
+## 📊 Database Schema (Prisma)
 
 ### Users Table:
-- `id` - Unique ID
-- `email` - Linked email (optional)
-- `phone` - Linked phone (optional)
-- `name` - Display name
-- `googleId` - Google login ID (optional)
-- `kycStatus` - Verification status
-- `isVerified` - Account verified?
+```prisma
+model User {
+  id            String    @id @default(uuid())
+  email         String?   @unique
+  phone         String?   @unique
+  name          String?
+  googleId      String?   @unique
+  kycStatus     String    @default("PENDING")
+  isVerified   Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  wallets      Wallet[]
+  sentTransactions   Transaction[]
+  receivedTransactions Transaction[]
+}
+```
 
-### Wallets Table:
-- `id` - Unique ID
-- `userId` - Owner user
-- `address` - Wallet address (like account number)
-- `type` - Wallet type (SOLANA)
-- `isPrimary` - Main wallet?
+### Wallets Table (Multi-wallet support):
+```prisma
+model Wallet {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  address      String   @unique
+  type         String   @default("SOLANA")
+  isPrimary    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}
+```
 
 ### Transactions Table:
-- `id` - Unique ID
-- `senderId` - Who sent
-- `recipientId` - Who receives
-- `amount` - How much SOL
-- `fee` - Transaction fee
-- `status` - PENDING → CONFIRMED → CLAIMED → COMPLETED
-- `claimCodeHash` - Encrypted claim code
-- `solanaTx` - Blockchain transaction ID
+```prisma
+model Transaction {
+  id                String    @id @default(uuid())
+  senderId          String
+  sender            User      @relation("senderTransactions")
+  recipientId      String?
+  recipient         User?     @relation("recipientTransactions")
+  amount           Float
+  fee              Float
+  totalAmount      Float
+  currency         String    @default("SOL")
+  status           String    @default("PENDING")
+  solanaTx         String?
+  claimCodeHash    String?
+  claimCodeExpiry  DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  claimCodes      ClaimCode[]
+  redemptions      Redemption[]
+}
+```
 
 ### ClaimCodes Table:
-- `id` - Unique ID
-- `transactionId` - Related transaction
-- `codePlain` - The actual code (e.g., "ABC123XYZ")
-- `codeHash` - Encrypted version
-- `expiresAt` - When code expires
-- `isUsed` - Has it been used?
+```prisma
+model ClaimCode {
+  id            String    @id @default(uuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId])
+  codeHash      String    @unique
+  codePlain     String
+  expiresAt    DateTime
+  isUsed       Boolean   @default(false)
+  usedAt       DateTime?
+  createdAt    DateTime  @default(now())
+}
+```
 
 ### Agents Table:
-- `id` - Unique ID
-- `name` - Agent name
-- `phone` - Contact number
-- `location` - Address
-- `isVerified` - Verified agent?
-- `totalPayouts` - How many payouts done
-- `totalVolume` - Total money handled
+```prisma
+model Agent {
+  id            String    @id @default(uuid())
+  name          String
+  phone         String    @unique
+  email         String?
+  walletAddress String    @unique
+  location      String
+  lat           Float?
+  lng           Float?
+  isVerified    Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  totalPayouts  Int       @default(0)
+  totalVolume   Float     @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  redemptions   Redemption[]
+}
+```
 
 ---
 
-## Setting Up Development
+## 🔄 Transaction Lifecycle
+
+```
+┌─────��─��────────────────────────────────────────────────────────────┐
+│                     TRANSACTION FLOW                                │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                    │
+│  1. USER CREATES TRANSACTION                                        │
+│     └─► POST /api/transactions                                     │
+│         │                                                          │
+│         ▼                                                          │
+│  2. BACKEND PROCESSES                                              │
+│     ├─► Create transaction record                                 │
+│     ├─► Generate claim code (random 12 chars)                     │
+│     ├─► Hash the code (SHA-256)                                    │
+│     ├─► Store hash (NOT plain code)                               │
+│     ├─► Set expiry (24 hours)                                     │
+│     └─► Return code to user                                        │
+│         │                                                          │
+│         ▼                                                          │
+│  3. STATUS: "PENDING"                                             │
+│                                                                    │
+│  4. USER SHARES CLAIM CODE                                         │
+│     (via WhatsApp, SMS, Signal, etc.)                              │
+│         │                                                          │
+│         ▼                                                          │
+│  5. RECIPIENT VERIFIES                                              │
+│     └─► POST /api/claims/verify                                    │
+│         │                                                          │
+│         ▼                                                          │
+│  6. BACKEND VERIFIES                                               │
+│     ├─► Hash input code                                            │
+│     ├─► Compare with stored hash                                   │
+│     ├─► Check expiration                                           │
+│     ├─► Check if already used                                      │
+│     └─► Return transaction details                                │
+│         │                                                          │
+│         ▼                                                          │
+│  7. AGENT REDEEMS                                                  │
+│     └─► POST /api/claims/redeem                                    │
+│         │                                                          │
+│         ▼                                                          │
+│  8. BACKEND REDEEMS                                                 │
+│     ├─► Mark code as used                                          │
+│     ├─► Update transaction status                                 │
+│     ├─► Create redemption record                                   │
+│     ├─► Increment agent stats                                       │
+│     └─► Return success                                             │
+│         │                                                          │
+│         ▼                                                          │
+│  9. STATUS: "CLAIMED"                                               │
+│                                                                    │
+│ 10. RECIPIENT RECEIVES CASH                                         │
+│     └─► Agent gives NPR equivalent                                │
+│                                                                    │
+│         ▼                                                          │
+│  11. STATUS: "COMPLETED"                                            │
+│                                                                    │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🔒 Security Architecture
+
+### Authentication Flow:
+```
+1. User connects wallet (Phantom)
+         │
+         ▼
+2. Get wallet address (public key)
+         │
+         ▼
+3. Send to /api/auth/login
+         │
+         ▼
+4. Server generates JWT token
+   - Contains: userId, walletAddress, role
+   - Expires: 7 days
+         │
+         ▼
+5. Store token in localStorage
+         │
+         ▼
+6. All API requests include:
+   Authorization: Bearer <token>
+```
+
+### Security Measures:
+- 🔑 **JWT Authentication** - Stateless, secure tokens
+- 🏦 **Wallet-only auth** - No passwords to leak
+- ⏰ **Token expiry** - 7-day validity
+- 🔒 **Code hashing** - Plain codes never stored
+- ⏳ **Code expiry** - 24-hour window
+- ♻️ **One-time use** - Prevents double-spending
+- ✅ **Agent KYC** - Verified agents only
+- 📊 **Rate limiting** - Prevents abuse
+- 🔐 **HTTPS** - Secure communication
+
+---
+
+## 📡 API Endpoints
+
+### Authentication:
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/auth/register` | No | Create account with wallet |
+| POST | `/api/auth/login` | No | Login with wallet |
+| GET | `/api/auth/me` | Yes | Get current user |
+| POST | `/api/auth/update` | Yes | Update profile |
+
+### Transactions:
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/transactions` | Yes | Create transaction |
+| GET | `/api/transactions` | No | List transactions |
+| GET | `/api/transactions/:id` | Yes | Get transaction |
+
+### Claims:
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/claims/verify` | No | Verify claim code |
+| POST | `/api/claims/redeem` | No | Redeem claim code |
+
+### Agents:
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/agents/register` | No | Register agent |
+| GET | `/api/agents` | No | List agents |
+| GET | `/api/agents/nearby` | No | Find nearby |
+| GET | `/api/agents/:id` | Yes | Get agent |
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites:
 - Node.js 18+
@@ -130,40 +429,34 @@ AamaPay is a web application that lets you send money (in SOL cryptocurrency) to
 ### Installation:
 
 ```bash
-# Clone or download the project
+# Clone project
 cd aamapay
 
-# Install root dependencies
+# Install all dependencies
 npm install
 
-# Install backend dependencies
-cd backend
-npm install
+# Install backend
+cd backend && npm install
 
-# Go back and install frontend
-cd ../frontend
-npm install
+# Install frontend
+cd ../frontend && npm install
 ```
 
-### Running the App:
+### Running:
 
 ```bash
-# Terminal 1 - Start backend
+# Terminal 1 - Backend (port 3001)
 cd backend
 npx tsx src/index.ts
-# Shows: AamaPay API running on port 3001
 
-# Terminal 2 - Start frontend
+# Terminal 2 - Frontend (port 3000)
 cd frontend
 npx next dev
-# Shows: Ready in http://localhost:3000
 ```
 
 ### Environment Variables:
 
-Create `.env` files:
-
-**Backend `.env`:**
+**Backend (.env):**
 ```env
 PORT=3001
 DATABASE_URL=file:./dev.db
@@ -171,7 +464,7 @@ JWT_SECRET=your-secret-key
 FRONTEND_URL=http://localhost:3000
 ```
 
-**Frontend `.env.local`:**
+**Frontend (.env.local):**
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXT_PUBLIC_SOLANA_NETWORK=devnet
@@ -179,179 +472,132 @@ NEXT_PUBLIC_SOLANA_NETWORK=devnet
 
 ---
 
-## Key Files & Directories:
+## 🌍 Deployment to Production
+
+### Backend (Railway/Render):
+```bash
+# 1. Push to GitHub
+# 2. Connect to Railway/Render
+# 3. Set variables:
+#    PORT=3001
+#    DATABASE_URL=postgresql://...
+#    JWT_SECRET=<random-32-chars>
+# 4. Build: npm run build
+# 5. Start: npx tsx src/index.ts
+```
+
+### Frontend (Vercel):
+```bash
+# 1. Push to GitHub
+# 2. Connect to Vercel
+# 3. Set variables:
+#    NEXT_PUBLIC_API_URL=https://api.aamapay.com
+#    NEXT_PUBLIC_SOLANA_NETWORK=mainnet
+# 4. Deploys automatically
+```
+
+### Database (PostgreSQL):
+- Use **Supabase** or **Neon**
+- Update schema.prisma for PostgreSQL
+- Run migrations
+
+---
+
+## 📁 Project Structure
 
 ```
 aamapay/
 ├── backend/
 │   ├── src/
-│   │   ├── routes/        # API endpoints
-│   │   │   ├── auth.ts       # Login/register
+│   │   ├── routes/          # API endpoints
+│   │   │   ├── auth.ts
 │   │   │   ├── transactions.ts
 │   │   │   ├── claims.ts
-│   │   │   └── agents.ts
-│   │   ├── middleware/    # Authentication
-│   │   └── config/       # Database config
-│   └── package.json
+│   │   │   ├── agents.ts
+│   │   │   └── users.ts
+│   │   ├── middleware/
+│   │   │   ├── auth.ts     # JWT verification
+│   │   │   └── errorHandler.ts
+│   │   ├── config/
+│   │   │   └── prisma.ts
+│   │   ├── utils/
+│   │   │   └── crypto.ts  # Code generation
+│   │   └── index.ts       # Express app
+│   ├── package.json
+│   └── tsconfig.json
 ├── frontend/
 │   ├── src/
-│   │   ├── app/         # Next.js pages
-│   │   │   ├── send/page.tsx
-│   │   │   ├── claim/page.tsx
-│   │   │   ├── agent/page.tsx
-│   │   │   └── profile/page.tsx
-│   │   ├── components/  # Reusable components
-│   │   ├── context/    # Wallet connection
-│   │   └── utils/     # API utilities
-│   └── package.json
+│   │   ├── app/            # Next.js App Router
+│   │   │   ├── page.tsx
+│   │   │   ├── send/
+│   │   │   ├── claim/
+│   │   │   ├── receive/
+│   │   │   ├── agent/
+│   │   │   ├── dashboard/
+│   │   │   ├── profile/
+│   │   │   ├── admin/
+│   │   │   └── simulation/
+│   │   ├── components/
+│   │   │   ├── Landing/
+│   │   │   ├── CinematicLanding/
+│   │   │   ├── Simulation/
+│   │   │   └── ...
+│   │   ├── context/
+│   │   │   └── WalletContext.tsx
+│   │   ├── lib/
+│   │   │   └── simulation/
+│   │   └── utils/
+│   │       └── api.ts
+│   ├── package.json
+│   └── tailwind.config.ts
 ├── database/
-│   └── schema.prisma  # Database definition
-└── package.json
+│   └── schema.prisma
+├── contracts/              # Solana programs
+├── docs/
+├── SPEC.md
+├── README.md
+├── package.json
+└── start.sh
 ```
 
 ---
 
-## API Endpoints:
+## 🛠️ Common Issues & Solutions
 
-### Authentication:
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | Create account |
-| POST | `/api/auth/login` | Login with wallet |
-| GET | `/api/auth/me` | Get current user |
-| POST | `/api/auth/update` | Update profile |
-
-### Transactions:
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/transactions` | Create new transaction |
-| GET | `/api/transactions` | List all transactions |
-| GET | `/api/transactions/:id` | Get specific transaction |
-
-### Claims:
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/claims/verify` | Verify claim code |
-| POST | `/api/claims/redeem` | Redeem claim code |
-
-### Agents:
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/agents/register` | Register as agent |
-| GET | `/api/agents` | List agents |
-| GET | `/api/agents/nearby` | Find nearby agents |
-
----
-
-## Transaction Flow:
-
-```
-1. SENDER creates transaction
-       │
-       ▼
-2. Backend creates transaction + claim code
-       │
-       ▼
-3. Transaction status = "PENDING"
-       │
-       ▼
-4. Sender shares claim code with recipient
-       │
-       ▼
-5. Recipient goes to /claim, verifies code
-       │
-       ▼
-6. Agent verifies and redeems code
-       │
-       ▼
-7. Transaction status = "CLAIMED"
-       │
-       ▼
-8. Agent gives cash to recipient
-       │
-       ▼
-9. Transaction status = "COMPLETED"
-```
-
----
-
-## Security Features:
-
-1. **Wallet-based auth** - No passwords needed
-2. **Claim code expiry** - Codes expire after 24 hours
-3. **One-time use** - Each code can only be used once
-4. **Encrypted codes** - Plain codes are encrypted in database
-5. **Agent verification** - Only verified agents can give cash
-
----
-
-## Production Deployment:
-
-### Backend (Railway/Render):
-1. Push to GitHub
-2. Connect to Railway/Render
-3. Set environment variables:
-   - `PORT` → 3001
-   - `DATABASE_URL` → PostgreSQL URL
-   - `JWT_SECRET` → Random secure string
-4. Build command: `npm run build`
-5. Start command: `npx tsx src/index.ts`
-
-### Frontend (Vercel):
-1. Push to GitHub
-2. Connect to Vercel
-3. Set environment variable:
-   - `NEXT_PUBLIC_API_URL` → Your backend URL
-   - `NEXT_PUBLIC_SOLANA_NETWORK` → mainnet
-4. Deploy automatically
-
-### Database:
-- Use **Supabase** or **Neon** (PostgreSQL)
-- Update `schema.prisma` for PostgreSQL:
-```prisma
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-```
-
----
-
-## Common Issues:
-
-### "Port 3000 already in use"
+### Issue: "Port in use"
 ```bash
-# Kill existing processes
 pkill -f "next"
 pkill -f "tsx"
 ```
 
-### "Database not found"
+### Issue: "Database not found"
 ```bash
 cd database
+npx prisma generate
 npx prisma db push
 ```
 
-### "Wallet not connecting"
-- Make sure Phantom extension is installed
-- Click "Connect Wallet" button
-- Approve in Phantom popup
+### Issue: "Wallet not connecting"
+- Install Phantom browser extension
+- Click connect button
+- Approve connection in Phantom
 
 ---
 
-## Support & Help:
+## 📞 Support
 
-For questions or issues:
-- Check the codebase comments
-- Open browser console (F12) for error messages
-- Check backend logs in terminal
-
----
-
-## License:
-
-MIT License - Feel free to use and modify!
+- Check browser console (F12) for errors
+- Check backend terminal for logs
+- Review codebase comments
 
 ---
 
-**Made with ❤️ for financial inclusion in Nepal**
+## 📜 License
+
+MIT License
+
+---
+
+**Built with ❤️ for financial inclusion in Nepal**
+
+**Powered by Solana Blockchain**
