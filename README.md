@@ -1,4 +1,4 @@
-# hackathoncolona
+# hackathonSolona
 
 A short description: Hackathon project for Colona — add a concise project overview here.
 

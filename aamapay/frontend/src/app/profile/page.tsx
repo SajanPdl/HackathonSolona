@@ -19,7 +19,7 @@ import {
   Eye,
   EyeOff,
   Shield,
-  Transaction,
+  History,
   LogOut,
   ChevronRight,
   Loader2,

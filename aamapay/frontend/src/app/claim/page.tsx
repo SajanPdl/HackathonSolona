@@ -1,159 +1,250 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useWallet } from "@/context/WalletContext";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { api } from "@/utils/api";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import toast, { Toaster } from "react-hot-toast";
-import gsap from "gsap";
+import { useState } from 'react';
+import Link from 'next/link';
+import { useWallet } from '@/context/WalletContext';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useWeb3Auth, useSolanaTransaction } from '@/hooks/useWeb3Auth';
+import toast, { Toaster } from 'react-hot-toast';
 import {
   Wallet,
   CheckCircle,
-  MapPin,
   Loader2,
   ChevronRight,
   Shield,
   Clock,
-  DollarSign,
-  Users,
-  Receipt,
   AlertCircle,
   Copy,
   ArrowRight,
-} from "lucide-react";
+  Key,
+} from 'lucide-react';
 
 export default function ClaimPage() {
   const { connected, publicKey } = useWallet();
-  const [claimCode, setClaimCode] = useState("");
-  const [step, setStep] = useState<"connect" | "enter" | "verify" | "success">(
-    "connect",
-  );
+  const { authenticate, loading: authLoading } = useWeb3Auth();
+  const { sendSol, loading: txLoading } = useSolanaTransaction();
+  
+  const [claimCode, setClaimCode] = useState('');
+  const [step, setStep] = useState<'connect' | 'enter' | 'verify' | 'processing' | 'success' | 'error'>('connect');
   const [verifiedTx, setVerifiedTx] = useState<any>(null);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const verifyMutation = useMutation({
-    mutationFn: (data: { claimCode: string }) =>
-      api.claims.verify(data) as Promise<any>,
-    onSuccess: (data: any) => {
-      if (data.valid) {
-        setVerifiedTx(data.transaction);
-        setStep("verify");
-      }
-    },
-    onError: () => {
-      toast.error("Invalid or expired claim code");
-    },
-  });
-
-  const redeemMutation = useMutation({
-    mutationFn: (data: { claimCode: string; agentId: string }) =>
-      api.claims.redeem(
-        data,
-        localStorage.getItem("aamapay_token")!,
-      ) as Promise<any>,
-    onSuccess: () => {
-      setStep("success");
-      toast.success("Money received successfully!");
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to redeem");
-    },
-  });
-
-  useEffect(() => {
-    if (connected && publicKey) {
-      const token = localStorage.getItem("aamapay_token");
-      if (token) {
-        setStep("enter");
-      }
+  const handleVerify = async () => {
+    if (!claimCode || claimCode.length < 6) {
+      toast.error('Please enter a valid claim code');
+      return;
     }
-  }, [connected, publicKey]);
 
-  const handleConnect = async () => {
-    if (connected && publicKey) {
-      try {
-        const token = localStorage.getItem("aamapay_token");
-        if (!token) {
-          const res = (await api.auth.login({
-            walletAddress: publicKey.toString(),
-          })) as { token: string };
-          localStorage.setItem("aamapay_token", res.token);
-        }
-        setStep("enter");
-      } catch (error) {
-        try {
-          const res = (await api.auth.register({
-            walletAddress: publicKey.toString(),
-          })) as { token: string };
-          localStorage.setItem("aamapay_token", res.token);
-          setStep("enter");
-        } catch (err) {
-          toast.error("Failed to connect wallet");
-        }
+    setStep('processing');
+
+    try {
+      const response = await fetch(`/api/transactions/claim/${encodeURIComponent(claimCode)}`);
+      const data = await response.json();
+
+      if (!response.ok || !data.valid) {
+        throw new Error(data.error || 'Invalid claim code');
       }
-    }
-  };
 
-  const handleVerify = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (claimCode.length >= 6) {
-      verifyMutation.mutate({ claimCode });
+      setVerifiedTx(data);
+      setStep('verify');
+    } catch (error: any) {
+      setErrorMessage(error.message);
+      setStep('error');
     }
   };
 
   const handleRedeem = async () => {
+    if (!publicKey) {
+      toast.error('Connect wallet first');
+      return;
+    }
+
+    setStep('processing');
+
     try {
-      const token = localStorage.getItem("aamapay_token");
-      if (!token) {
-        toast.error("Please connect your wallet");
-        return;
+      const response = await fetch(`/api/transactions/claim/${encodeURIComponent(claimCode)}/redeem`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Solana ${publicKey.toBase58()}:${Date.now()}`
+        },
+        body: JSON.stringify({}),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to redeem');
       }
-      await api.claims.redeem({ claimCode, agentId: "default-agent" }, token);
-      setStep("success");
+
+      setStep('success');
+      toast.success('Successfully redeemed!');
     } catch (error: any) {
-      toast.error(error.message || "Failed to redeem");
+      toast.error(error.message || 'Redemption failed');
+      setStep('verify');
     }
   };
 
-  if (step === "success") {
+  const copyAmount = () => {
+    if (verifiedTx?.amount) {
+      navigator.clipboard.writeText(verifiedTx.amount.toString());
+      toast.success('Copied!');
+    }
+  };
+
+  if (step === 'success') {
     return (
       <div className="min-h-screen bg-[#F5F5F5] pt-20 pb-12">
         <div className="max-w-lg mx-auto px-4">
-          <div className="bg-white rounded-3xl shadow-lg p-8 text-center animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-lg p-8 text-center">
             <div className="w-20 h-20 rounded-full bg-[#16A34A]/10 flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-10 h-10 text-[#16A34A]" />
             </div>
-
-            <h1 className="text-2xl font-bold text-[#111827] mb-2">
-              Money Received!
-            </h1>
+            
+            <h1 className="text-2xl font-bold text-[#111827] mb-2">Claim Successful!</h1>
             <p className="text-[#6B7280] mb-8">
-              Your transfer has been completed successfully
+              SOL has been transferred to your wallet
             </p>
 
-            <div className="bg-[#16A34A]/5 rounded-2xl p-6 mb-6">
-              <p className="text-sm text-[#6B7280] mb-1">You received</p>
-              <p className="text-3xl font-bold text-[#16A34A]">
-                {verifiedTx?.amount} SOLONA
-              </p>
+            <div className="bg-[#F5F5F5] rounded-2xl p-6 mb-6">
+              <div className="flex items-center justify-between">
+                <span className="text-[#6B7280]">Amount Received</span>
+                <span className="text-2xl font-bold text-[#111827]">
+                  {verifiedTx?.amount} SOL
+                </span>
+              </div>
             </div>
 
             <div className="space-y-3">
               <Link
-                href="/"
-                className="block w-full bg-[#B91C1C] text-white py-4 rounded-xl font-medium hover:bg-[#991B1B] transition-colors flex items-center justify-center gap-2"
+                href="/dashboard"
+                className="block w-full bg-[#B91C1C] text-white py-4 rounded-xl font-medium hover:bg-[#991B1B] flex items-center justify-center gap-2"
               >
-                Back to Home
+                View Transaction
                 <ArrowRight className="w-5 h-5" />
               </Link>
-              <button
-                onClick={() => window.location.reload()}
-                className="w-full bg-[#F5F5F5] text-[#111827] py-4 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+              
+              <Link
+                href="/"
+                className="block w-full bg-[#F5F5F5] text-[#111827] py-4 rounded-xl font-medium hover:bg-gray-200"
               >
-                Claim Another
-              </button>
+                Back to Home
+              </Link>
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'processing' || txLoading) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] pt-20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-20 h-20 rounded-full bg-[#B91C1C]/10 flex items-center justify-center mx-auto mb-6 animate-pulse">
+            <Loader2 className="w-10 h-10 text-[#B91C1C] animate-spin" />
+          </div>
+          <h2 className="text-xl font-semibold text-[#111827] mb-2">Processing...</h2>
+          <p className="text-[#6B7280]">Please wait</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'verify' && verifiedTx) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] pt-20 pb-12">
+        <div className="max-w-lg mx-auto px-4">
+          <div className="mb-8">
+            <button onClick={() => setStep('enter')} className="text-[#6B7280] hover:text-[#111827] text-sm flex items-center gap-1">
+              <ChevronRight className="w-4 h-4 rotate-180" />
+              Back
+            </button>
+          </div>
+
+          <div className="bg-white rounded-3xl shadow-lg p-8 text-center">
+            <div className="w-20 h-20 rounded-full bg-[#16A34A]/10 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-10 h-10 text-[#16A34A]" />
+            </div>
+            
+            <h1 className="text-2xl font-bold text-[#111827] mb-2">Claim Code Verified</h1>
+            <p className="text-[#6B7280] mb-6">Ready to claim</p>
+
+            <div className="bg-[#F5F5F5] rounded-2xl p-6 mb-6 text-left">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[#6B7280]">Amount</span>
+                <span className="text-2xl font-bold text-[#111827]">
+                  {verifiedTx.amount} SOL
+                </span>
+              </div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[#6B7280]">Sender</span>
+                <span className="text-[#111827] font-mono text-sm">
+                  {verifiedTx.sender?.slice(0, 6)}...{verifiedTx.sender?.slice(-4)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[#6B7280]">Expires</span>
+                <span className="text-[#111827]">
+                  {new Date(verifiedTx.expiresAt).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 mb-6 p-4 bg-[#16A34A]/10 rounded-xl">
+              <Shield className="w-5 h-5 text-[#16A34A]" />
+              <div>
+                <p className="text-sm font-medium text-[#111827]">On-Chain Verified</p>
+                <p className="text-xs text-[#6B7280]">Transaction confirmed</p>
+              </div>
+            </div>
+
+            {!connected ? (
+              <div className="space-y-3">
+                <WalletMultiButton className="!bg-[#B91C1C] !hover:bg-[#991B1B] !rounded-xl !w-full !justify-center !py-4" />
+                <p className="text-sm text-[#6B7280]">Connect wallet to claim funds</p>
+              </div>
+            ) : (
+              <button
+                onClick={handleRedeem}
+                disabled={txLoading}
+                className="w-full bg-[#16A34A] text-white py-4 rounded-xl font-medium hover:bg-[#15803D] disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <Wallet className="w-5 h-5" />
+                Claim to My Wallet
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'error') {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] pt-20 pb-12">
+        <div className="max-w-lg mx-auto px-4">
+          <div className="mb-8">
+            <button onClick={() => setStep('enter')} className="text-[#6B7280] hover:text-[#111827] text-sm flex items-center gap-1">
+              <ChevronRight className="w-4 h-4 rotate-180" />
+              Back
+            </button>
+          </div>
+
+          <div className="bg-white rounded-3xl shadow-lg p-8 text-center">
+            <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-10 h-10 text-red-500" />
+            </div>
+            
+            <h1 className="text-2xl font-bold text-[#111827] mb-2">Invalid Claim Code</h1>
+            <p className="text-[#6B7280] mb-6">{errorMessage}</p>
+
+            <button
+              onClick={() => setStep('enter')}
+              className="w-full bg-[#B91C1C] text-white py-4 rounded-xl font-medium hover:bg-[#991B1B]"
+            >
+              Try Another Code
+            </button>
           </div>
         </div>
       </div>
@@ -166,16 +257,14 @@ export default function ClaimPage() {
         <div className="max-w-lg mx-auto px-4 py-12">
           <div className="bg-white rounded-3xl shadow-lg p-8 text-center">
             <div className="w-16 h-16 rounded-2xl bg-[#B91C1C]/10 flex items-center justify-center mx-auto mb-6">
-              <Wallet className="w-8 h-8 text-[#B91C1C]" />
+              <Key className="w-8 h-8 text-[#B91C1C]" />
             </div>
-
-            <h1 className="text-2xl font-bold text-[#111827] mb-3">
-              Connect Wallet to Claim
-            </h1>
-            <p className="text-[#6B7280] mb-8 max-w-sm mx-auto">
-              Connect your Phantom wallet to verify and claim your transfer
+            
+            <h1 className="text-2xl font-bold text-[#111827] mb-3">Claim SOL</h1>
+            <p className="text-[#6B7280] mb-8">
+              Enter claim code to receive SOL from sender
             </p>
-
+            
             <WalletMultiButton className="!bg-[#B91C1C] !hover:bg-[#991B1B] !rounded-xl !w-full !justify-center !py-4" />
           </div>
         </div>
@@ -186,188 +275,73 @@ export default function ClaimPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F5] pt-20 pb-12">
       <Toaster position="top-center" />
-
+      
       <div className="max-w-lg mx-auto px-4">
         <div className="mb-8">
-          <Link
-            href="/"
-            className="text-[#6B7280] hover:text-[#111827] text-sm flex items-center gap-1"
-          >
+          <Link href="/" className="text-[#6B7280] hover:text-[#111827] text-sm flex items-center gap-1">
             <ChevronRight className="w-4 h-4 rotate-180" />
             Back
           </Link>
         </div>
 
         <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-[#16A34A] to-[#15803D] p-6 text-white">
+          <div className="bg-[#B91C1C] p-6 text-white">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                <Receipt className="w-6 h-6" />
+                <Key className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">Claim Money</h1>
-                <p className="text-green-100 text-sm">
-                  Enter your claim code to receive
-                </p>
+                <h1 className="text-xl font-bold">Claim SOL</h1>
+                <p className="text-red-200 text-sm">Enter your code</p>
               </div>
             </div>
           </div>
 
           <div className="p-6">
-            {step === "connect" && (
-              <div className="text-center py-8">
-                <button
-                  onClick={handleConnect}
-                  className="bg-[#B91C1C] text-white px-8 py-4 rounded-xl font-medium hover:bg-[#991B1B] transition-colors"
-                >
-                  Connect & Continue
-                </button>
+            <div className="flex items-center gap-3 mb-6 p-4 bg-[#F5F5F5] rounded-xl">
+              <div className="w-10 h-10 rounded-full bg-[#B91C1C]/10 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-[#B91C1C]" />
               </div>
-            )}
-
-            {step === "enter" && (
-              <form onSubmit={handleVerify}>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-[#111827] mb-2">
-                    Claim Code
-                  </label>
-                  <input
-                    type="text"
-                    value={claimCode}
-                    onChange={(e) => setClaimCode(e.target.value.toUpperCase())}
-                    placeholder="Enter your claim code"
-                    className="w-full px-4 py-4 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#B91C1C] focus:border-transparent text-center text-xl font-mono tracking-widest"
-                  />
-                  <p className="text-xs text-[#6B7280] mt-2">
-                    Ask the sender for the claim code they received
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3 p-4 bg-[#F5F5F5] rounded-xl mb-6">
-                  <Shield className="w-5 h-5 text-[#16A34A]" />
-                  <p className="text-sm text-[#6B7280]">
-                    Your code is encrypted and secure
-                  </p>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={verifyMutation.isPending || claimCode.length < 6}
-                  className="w-full bg-[#B91C1C] text-white py-4 rounded-xl font-medium hover:bg-[#991B1B] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {verifyMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    <>
-                      Verify Claim Code
-                      <ArrowRight className="w-5 h-5" />
-                    </>
-                  )}
-                </button>
-              </form>
-            )}
-
-            {step === "verify" && verifiedTx && (
-              <div className="animate-fade-in">
-                <div className="bg-[#16A34A]/5 border-2 border-[#16A34A]/20 rounded-2xl p-6 mb-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <CheckCircle className="w-6 h-6 text-[#16A34A]" />
-                    <span className="font-semibold text-[#16A34A]">
-                      Code Verified!
-                    </span>
-                  </div>
-                  <p className="text-3xl font-bold text-[#111827] mb-1">
-                    {verifiedTx.amount} SOLONA
-                  </p>
-                  <p className="text-sm text-[#6B7280]">
-                    Transfer confirmed • Sender: {verifiedTx.senderAddress}
-                  </p>
-                </div>
-
-                <div className="bg-[#F5F5F5] rounded-2xl p-5 mb-6">
-                  <h3 className="font-semibold text-[#111827] mb-3">
-                    How to receive?
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#B91C1C]/10 flex items-center justify-center shrink-0">
-                        <MapPin className="w-4 h-4 text-[#B91C1C]" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-[#111827]">
-                          Cash Pickup
-                        </p>
-                        <p className="text-sm text-[#6B7280]">
-                          Visit a nearby agent and get cash
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#16A34A]/10 flex items-center justify-center shrink-0">
-                        <Wallet className="w-4 h-4 text-[#16A34A]" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-[#111827]">
-                          Wallet Deposit
-                        </p>
-                        <p className="text-sm text-[#6B7280]">
-                          Instant transfer to your wallet
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleRedeem}
-                  disabled={redeemMutation.isPending}
-                  className="w-full bg-[#16A34A] text-white py-4 rounded-xl font-medium hover:bg-[#15803D] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {redeemMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      Receive to My Wallet
-                      <ArrowRight className="w-5 h-5" />
-                    </>
-                  )}
-                </button>
-
-                <div className="mt-6 pt-6 border-t border-gray-100">
-                  <p className="text-xs text-[#6B7280] text-center">
-                    By claiming, you agree to the transfer terms. Funds will be
-                    deposited instantly.
-                  </p>
-                </div>
+              <div>
+                <p className="text-sm font-medium text-[#111827]">Web3 Verification</p>
+                <p className="text-xs text-[#6B7280]">On-chain claim validation</p>
               </div>
-            )}
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-[#111827] mb-2">
+                Claim Code
+              </label>
+              <input
+                type="text"
+                value={claimCode}
+                onChange={(e) => setClaimCode(e.target.value.toUpperCase())}
+                placeholder="Enter 12-character code"
+                maxLength={12}
+                className="w-full px-4 py-4 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#B91C1C] focus:border-transparent transition-all text-center text-xl font-mono tracking-widest uppercase"
+              />
+            </div>
+
+            <button
+              onClick={handleVerify}
+              disabled={!claimCode || claimCode.length < 6}
+              className="w-full bg-[#B91C1C] text-white py-4 rounded-xl font-medium hover:bg-[#991B1B] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              Verify Claim Code
+              <ArrowRight className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
         <div className="mt-6 bg-white rounded-2xl p-6">
           <h3 className="font-semibold text-[#111827] mb-4 flex items-center gap-2">
             <Clock className="w-5 h-5 text-[#B91C1C]" />
-            Claim Code Info
+            Claim Code Tips
           </h3>
-          <div className="space-y-3 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-[#6B7280]">Valid for</span>
-              <span className="font-medium text-[#111827]">24 hours</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[#6B7280]">Can be claimed once</span>
-              <span className="font-medium text-[#111827]">Yes</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[#6B7280]">No hidden fees</span>
-              <span className="font-medium text-[#16A34A]">Always</span>
-            </div>
+          <div className="space-y-3 text-sm text-[#6B7280]">
+            <p>•Codes are 12 characters (e.g., VM0OXICTDGKB)</p>
+            <p>•Valid for 7 days from creation</p>
+            <p>•Can only be used once</p>
           </div>
         </div>
       </div>
